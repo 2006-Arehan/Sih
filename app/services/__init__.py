@@ -1,0 +1,6 @@
+from app.services.nlp_extractor import MultilingualNLPExtractor
+from app.services.nsqf_mapper import NSQFMapperService
+from app.services.skill_gap_engine import SkillGapEngine
+from app.services.obsolescence_engine import ObsolescenceEngine
+from app.services.recommendation_engine import RecommendationEngine
+from app.services.seed_service import seed_database
