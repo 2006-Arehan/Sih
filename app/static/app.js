@@ -934,6 +934,22 @@ function wireEvents() {
             setLanguage(lang);
         });
     });
+
+    // Role Tab Switcher Navigation
+    document.querySelectorAll(".role-tab").forEach(tab => {
+        tab.addEventListener("click", () => {
+            document.querySelectorAll(".role-tab").forEach(t => t.classList.remove("active"));
+            document.querySelectorAll(".view-content").forEach(v => v.classList.remove("active"));
+            tab.classList.add("active");
+            const targetId = tab.getAttribute("data-target");
+            if (targetId && $(targetId)) {
+                $(targetId).classList.add("active");
+            }
+            if (targetId === "govView" && midcMapInstance) {
+                setTimeout(() => midcMapInstance.invalidateSize(), 200);
+            }
+        });
+    });
 }
 
 async function init() {

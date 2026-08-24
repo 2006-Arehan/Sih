@@ -107,16 +107,9 @@ def startup_db_seed():
     t = threading.Thread(target=auto_scan_scheduler, daemon=True)
     t.start()
 
-# Serves React Frontend UI directly at GET /
+# Serves Regenerated Web UI at GET /
 @app.get("/", include_in_schema=False)
 def serve_dashboard(request: Request):
-    index_file = os.path.join(FRONTEND_DIST, "index.html")
-    if os.path.exists(index_file):
-        return FileResponse(index_file)
-    return templates.TemplateResponse(request=request, name="index.html")
-
-@app.get("/backend-ui", include_in_schema=False)
-def serve_backend_ui(request: Request):
     return templates.TemplateResponse(request=request, name="index.html")
 
 # Register API v1 Routers
