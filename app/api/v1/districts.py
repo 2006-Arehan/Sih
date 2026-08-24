@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.models import District, JobPosting
 from app.schemas.schemas import DistrictResponse
+from app.services.midc_heatmap_engine import MIDCHeatmapEngine
 
 router = APIRouter(prefix="/districts", tags=["District Intelligence"])
 
@@ -13,7 +14,6 @@ def get_districts(db: Session = Depends(get_db)):
     districts = db.query(District).all()
     results = []
     for d in districts:
-        # Extract top demanded skills for this district from job postings
         postings = db.query(JobPosting).filter(JobPosting.district_name == d.name).all()
         skills = []
         for p in postings:
@@ -31,3 +31,8 @@ def get_districts(db: Session = Depends(get_db)):
             top_demanded_skills=top_skills
         ))
     return results
+
+@router.get("/midc-heatmap")
+def get_midc_industrial_heatmap(db: Session = Depends(get_db)):
+    """Computes geospatial MIDC industrial cluster heatmap analytics for Maharashtra."""
+    return MIDCHeatmapEngine.get_midc_cluster_heatmap(db)

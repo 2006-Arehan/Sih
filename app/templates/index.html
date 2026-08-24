@@ -3,11 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Maharashtra Skill & LMI Intelligence Platform | SIH 26134</title>
+    <title data-i18n="app_title">Maharashtra Skill & LMI Intelligence Platform | Government of Maharashtra</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/styles.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
 <body>
     <!-- Tricolor accent bar -->
@@ -18,13 +20,20 @@
         <div class="header-left">
             <div class="emblem">🏛️</div>
             <div>
-                <h1>Skill Development &amp; Labour-Market Intelligence Platform</h1>
-                <p class="subtitle">SIH 26134 · Government of Maharashtra · Directorate of Vocational Education &amp; Training</p>
+                <h1 data-i18n="app_title">Skill Development &amp; Labour-Market Intelligence Platform</h1>
+                <p class="subtitle" data-i18n="app_subtitle">Government of Maharashtra · Directorate of Vocational Education &amp; Training</p>
             </div>
         </div>
-        <div class="header-right">
+        <div class="header-right" style="display:flex; align-items:center; gap:12px;">
+            <!-- 🌐 Multilingual Language Switcher -->
+            <div class="lang-switcher" style="display:flex; background:#1A365D; padding:3px; border-radius:20px; border:1px solid #2B6CB0;">
+                <button class="lang-btn active" data-lang="EN" style="padding:4px 10px; border-radius:16px; border:none; background:#2B6CB0; color:#fff; font-size:12px; font-weight:600; cursor:pointer;">🇬🇧 EN</button>
+                <button class="lang-btn" data-lang="MR" style="padding:4px 10px; border-radius:16px; border:none; background:transparent; color:#E2E8F0; font-size:12px; font-weight:600; cursor:pointer;">🇮🇳 मराठी</button>
+                <button class="lang-btn" data-lang="HI" style="padding:4px 10px; border-radius:16px; border:none; background:transparent; color:#E2E8F0; font-size:12px; font-weight:600; cursor:pointer;">🇮🇳 हिंदी</button>
+            </div>
+
             <button id="scanBtn" class="btn btn-primary">
-                <span class="btn-icon">📡</span> Scan Market
+                <span class="btn-icon">📡</span> <span data-i18n="scan_market">Scan Market</span>
             </button>
             <div id="scanStatus" class="scan-status"></div>
         </div>
@@ -32,22 +41,75 @@
 
     <!-- KPI strip -->
     <section class="kpi-strip" id="kpiStrip">
-        <div class="kpi-card"><div class="kpi-value" id="kpiDistricts">–</div><div class="kpi-label">Districts</div></div>
-        <div class="kpi-card"><div class="kpi-value" id="kpiPostings">–</div><div class="kpi-label">Live Job Postings</div></div>
-        <div class="kpi-card"><div class="kpi-value" id="kpiCourses">–</div><div class="kpi-label">Courses Tracked</div></div>
-        <div class="kpi-card"><div class="kpi-value" id="kpiEmerging">–</div><div class="kpi-label">Emerging Skills</div></div>
-        <div class="kpi-card"><div class="kpi-value danger" id="kpiRisk">–</div><div class="kpi-label">High-Risk Courses</div></div>
+        <div class="kpi-card"><div class="kpi-value" id="kpiDistricts">–</div><div class="kpi-label" data-i18n="kpi_districts">Districts</div></div>
+        <div class="kpi-card"><div class="kpi-value" id="kpiPostings">–</div><div class="kpi-label" data-i18n="kpi_postings">Live Job Postings</div></div>
+        <div class="kpi-card"><div class="kpi-value" id="kpiCourses">–</div><div class="kpi-label" data-i18n="kpi_courses">Courses Tracked</div></div>
+        <div class="kpi-card"><div class="kpi-value" id="kpiEmerging">–</div><div class="kpi-label" data-i18n="kpi_emerging">Emerging Skills</div></div>
+        <div class="kpi-card"><div class="kpi-value danger" id="kpiRisk">–</div><div class="kpi-label" data-i18n="kpi_risk">High-Risk Courses</div></div>
     </section>
 
     <main class="container">
-        <!-- PLACEHOLDER_MAIN -->
+        
+        <!-- 🗺️ FEATURE 1: INTERACTIVE MIDC CLUSTER HEATMAP (GIS) -->
+        <section class="panel" id="midcPanel">
+            <div class="panel-head">
+                <h2><span class="sec-num">GIS</span> <span data-i18n="gis_title">Interactive MIDC Industrial Cluster Heatmap</span></h2>
+                <span class="risk-pill risk-low" data-i18n="gis_badge">📍 Live Maharashtra Cluster Tracking</span>
+            </div>
+            <div class="district-grid" style="grid-template-columns: 1fr 340px;">
+                <div class="card" style="padding:0; overflow:hidden; border-radius:12px; height: 380px;">
+                    <div id="midcMap" style="width: 100%; height: 100%; min-height: 380px;"></div>
+                </div>
+                <div class="card" style="display:flex; flex-direction:column; gap:12px; justify-content:center;">
+                    <h3 style="margin:0; font-size:15px; color:#0F2942;" data-i18n="gis_subtitle">Industrial Cluster Spotlight</h3>
+                    <div id="midcClusterInfo">
+                        <p class="empty-hint">Click any marker on the map to view regional MIDC skill demand vs ITI training capacity.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 👨‍🎓 FEATURE 2: STUDENT & YOUTH UPSKILL SIMULATOR -->
+        <section class="panel" id="studentPanel">
+            <div class="panel-head">
+                <h2><span class="sec-num">AI</span> <span data-i18n="sim_title">Youth Upskill &amp; Employability Simulator</span></h2>
+                <span class="risk-pill risk-med" data-i18n="sim_badge">⚡ Instant Employability Index</span>
+            </div>
+            <div class="district-grid" style="grid-template-columns: 360px 1fr;">
+                <form id="upskillForm" class="card" style="display:flex; flex-direction:column; gap:12px;">
+                    <h3 style="margin:0; font-size:14px; color:#0F2942;" data-i18n="sim_profile">Candidate Profile &amp; Location</h3>
+                    <div>
+                        <label style="font-size:12px; font-weight:600; color:#4A5568;" data-i18n="sim_select_district">Select Target District:</label>
+                        <select id="simDistrict" class="select" style="width:100%; margin-top:4px;">
+                            <option value="Pune">Pune (Chakan Auto Belt)</option>
+                            <option value="Mumbai">Mumbai (BKC Tech &amp; BFSI)</option>
+                            <option value="Nagpur">Nagpur (MIHAN Logistics)</option>
+                            <option value="Chhatrapati Sambhajinagar">Sambhajinagar (DMIC Hub)</option>
+                            <option value="Nashik">Nashik (Agri &amp; Electrical)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-size:12px; font-weight:600; color:#4A5568;" data-i18n="sim_current_skills">Your Current Skills / Trade:</label>
+                        <input id="simSkills" class="input" style="width:100%; margin-top:4px;" placeholder="e.g. CNC Machine Operation, Python" value="CNC Machine Operation">
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="margin-top:6px;">
+                        <span data-i18n="sim_calc_btn">🚀 Calculate Employability Score</span>
+                    </button>
+                </form>
+
+                <div class="card" id="upskillResults" style="display:flex; flex-direction:column; justify-content:center;">
+                    <p class="empty-hint">Enter candidate profile to simulate district employability score &amp; micro-credential recommendations.</p>
+                </div>
+            </div>
+        </section>
+
         <!-- 1. District Intelligence -->
         <section class="panel" id="districtPanel">
             <div class="panel-head">
-                <h2><span class="sec-num">01</span> District Intelligence</h2>
+                <h2><span class="sec-num">01</span> <span data-i18n="sec01_title">District Intelligence</span></h2>
                 <div class="panel-actions">
                     <select id="districtSelect" class="select"></select>
-                    <button id="planBtn" class="btn btn-green">Generate Training Plan</button>
+                    <button id="planBtn" class="btn btn-green" data-i18n="sec01_btn">Generate Training Plan</button>
                 </div>
             </div>
             <div class="district-grid">
@@ -57,7 +119,7 @@
                     <div class="chips" id="districtIndustries"></div>
                 </div>
                 <div class="card chart-card">
-                    <h3>Top Demanded Skills</h3>
+                    <h3 data-i18n="sec01_top_skills">Top Demanded Skills</h3>
                     <canvas id="districtSkillsChart"></canvas>
                     <p class="empty-hint" id="districtChartHint">Select a district to view demand.</p>
                 </div>
@@ -66,8 +128,11 @@
 
         <!-- 7. District Training Plan (rendered on demand) -->
         <section class="panel hidden" id="planPanel">
-            <div class="panel-head">
-                <h2><span class="sec-num">07</span> District Training Plan · <span id="planDistrictName"></span></h2>
+            <div class="panel-head" style="display:flex; justify-content:space-between; align-items:center;">
+                <h2><span class="sec-num">07</span> <span data-i18n="sec07_title">District Training Plan</span> · <span id="planDistrictName"></span></h2>
+                <button id="downloadPdfBtn" class="btn btn-primary" style="background:#C53030; border-color:#9B2C2C;" data-i18n="pdf_btn">
+                    📄 Download Official DSDC Cabinet Note PDF
+                </button>
             </div>
             <div id="planContent" class="plan-content"></div>
         </section>
@@ -75,7 +140,7 @@
         <!-- 3. Skill Gap Table -->
         <section class="panel" id="gapPanel">
             <div class="panel-head">
-                <h2><span class="sec-num">03</span> Curriculum–Market Skill Gap</h2>
+                <h2><span class="sec-num">03</span> <span data-i18n="sec03_title">Curriculum–Market Skill Gap</span></h2>
                 <div class="legend">
                     <span class="legend-item"><i class="dot green"></i>Low &lt;30%</span>
                     <span class="legend-item"><i class="dot amber"></i>Medium 30–60%</span>
@@ -85,7 +150,14 @@
             <div class="table-wrap">
                 <table class="data-table" id="gapTable">
                     <thead>
-                        <tr><th>Course</th><th>District</th><th>Sector</th><th>Gap %</th><th>Missing Skills</th><th>Risk</th></tr>
+                        <tr>
+                            <th data-i18n="th_course">Course</th>
+                            <th data-i18n="th_district">District</th>
+                            <th data-i18n="th_sector">Sector</th>
+                            <th data-i18n="th_gap">Gap %</th>
+                            <th data-i18n="th_missing">Missing Skills</th>
+                            <th data-i18n="th_risk">Risk</th>
+                        </tr>
                     </thead>
                     <tbody id="gapTableBody">
                         <tr><td colspan="6" class="loading-row">Loading skill-gap analysis…</td></tr>
@@ -97,42 +169,47 @@
         <!-- 4. Obsolescence Cards -->
         <section class="panel" id="obsPanel">
             <div class="panel-head">
-                <h2><span class="sec-num">04</span> Course Obsolescence Risk</h2>
+                <h2><span class="sec-num">04</span> <span data-i18n="sec04_title">Course Obsolescence Risk</span></h2>
             </div>
             <div class="obs-grid" id="obsGrid">
                 <p class="empty-hint">Assessing courses…</p>
             </div>
         </section>
 
-        <!-- 5. Recommendations -->
+        <!-- 5. Recommendations & AI Syllabus Generator -->
         <section class="panel" id="recPanel">
             <div class="panel-head">
-                <h2><span class="sec-num">05</span> Curriculum Modernisation Recommendations</h2>
+                <h2><span class="sec-num">05</span> <span data-i18n="sec05_title">Curriculum Modernisation &amp; AI Syllabus Generator</span></h2>
                 <div class="panel-actions">
                     <select id="recCourseSelect" class="select"></select>
+                    <button id="aiSyllabusBtn" class="btn btn-primary" style="background:#2B6CB0; display:none;" data-i18n="ai_syllabus_btn">
+                        🤖 One-Click AI Syllabus Generator
+                    </button>
                 </div>
             </div>
             <div id="recContent" class="rec-content">
-                <p class="empty-hint">Select a course to generate recommendations.</p>
+                <p class="empty-hint">Select a course to generate recommendations &amp; AI syllabus module.</p>
             </div>
+            <!-- AI Syllabus Container -->
+            <div id="aiSyllabusBox" style="margin-top:16px; display:none;"></div>
         </section>
 
         <!-- 6. Emerging Skills -->
         <section class="panel" id="trendPanel">
             <div class="panel-head">
-                <h2><span class="sec-num">06</span> Skill Trend Radar</h2>
+                <h2><span class="sec-num">06</span> <span data-i18n="sec06_title">Skill Trend Radar</span></h2>
             </div>
             <div class="trend-columns">
-                <div class="trend-col emerging"><h3>🚀 Emerging</h3><div id="trendEmerging"></div></div>
-                <div class="trend-col established"><h3>✅ Established</h3><div id="trendEstablished"></div></div>
-                <div class="trend-col declining"><h3>📉 Declining</h3><div id="trendDeclining"></div></div>
+                <div class="trend-col emerging"><h3 data-i18n="trend_emerging">🚀 Emerging</h3><div id="trendEmerging"></div></div>
+                <div class="trend-col established"><h3 data-i18n="trend_established">✅ Established</h3><div id="trendEstablished"></div></div>
+                <div class="trend-col declining"><h3 data-i18n="trend_declining">📉 Declining</h3><div id="trendDeclining"></div></div>
             </div>
         </section>
 
         <!-- 8. Employer Feedback -->
         <section class="panel" id="feedbackPanel">
             <div class="panel-head">
-                <h2><span class="sec-num">08</span> Employer Feedback Loop</h2>
+                <h2><span class="sec-num">08</span> <span data-i18n="sec08_title">Employer Feedback Loop</span></h2>
             </div>
             <div class="feedback-grid">
                 <form id="feedbackForm" class="card feedback-form">
@@ -158,19 +235,17 @@
                         </select>
                         <input name="comments" placeholder="Comments" required>
                     </div>
-                    <button type="submit" class="btn btn-primary">Submit Feedback</button>
+                    <button type="submit" class="btn btn-primary" data-i18n="submit_feedback">Submit Feedback</button>
                     <div id="feedbackMsg" class="form-msg"></div>
                 </form>
                 <div class="feedback-list" id="feedbackList"></div>
             </div>
         </section>
 
-
-
     </main>
 
     <footer class="app-footer">
-        <p>Prototype for Smart India Hackathon 26134 · Data is simulated for demonstration · SQLite · FastAPI</p>
+        <p data-i18n="app_footer">Skill Development &amp; Labour-Market Intelligence Platform · Directorate of Vocational Education &amp; Training, Government of Maharashtra</p>
     </footer>
 
     <script src="/static/app.js"></script>
