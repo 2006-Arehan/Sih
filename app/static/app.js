@@ -309,7 +309,7 @@ async function handleUpskillSimulation(e) {
     const skillsList = skillsRaw.split(",").map(s => s.trim()).filter(Boolean);
     const box = $("upskillResults");
 
-    box.innerHTML = `<p class="empty-hint">Simulating employability index for ${esc(district)}…</p>`;
+    box.innerHTML = `<p class="empty-hint">Simulating multi-dimensional career index & salary projection for ${esc(district)}…</p>`;
 
     try {
         const res = await postJSON(`${API}/student/upskill-simulator`, {
@@ -318,39 +318,86 @@ async function handleUpskillSimulation(e) {
         });
 
         const score = res.employability_index || 0;
-        const micro = res.recommended_micro_credential || {};
+        const sub = res.sub_score_breakdown || {};
+        const sal = res.salary_projections || {};
+        const employers = res.top_hiring_companies || [];
+        const micros = res.recommended_micro_credentials || [res.recommended_micro_credential];
         const jobs = res.matching_job_samples || [];
 
         const jobListHtml = jobs.map(j => `
-            <div style="font-size:12px; padding:4px 8px; background:#F7FAFC; border-radius:4px; margin-bottom:4px;">
-                <b>${esc(j.title)}</b> @ ${esc(j.company)} (${esc(j.sector)})
+            <div style="font-size:12px; padding:6px 10px; background:#F7FAFC; border:1px solid #E2E8F0; border-radius:6px; margin-bottom:6px; display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                    <b style="color:#0F2942;">${esc(j.title)}</b> <span style="color:#718096;">@ ${esc(j.company)}</span>
+                </div>
+                <span class="risk-pill risk-low" style="font-size:11px;">${j.match_percentage || 85}% Match</span>
             </div>
-        `).join('') || '<div style="font-size:12px; color:#718096;">General local industry match</div>';
+        `).join('') || '<div style="font-size:12px; color:#718096;">General local MIDC industry match</div>';
+
+        const employerChips = employers.map(c => `<span class="chip" style="font-size:11px; margin:2px;">🏢 ${esc(c)}</span>`).join('');
+
+        const microCards = micros.map(m => `
+            <div style="background:#FFF5F5; border:1px solid #FEB2B2; padding:10px 12px; border-radius:8px; margin-bottom:8px;">
+                <div style="font-size:13px; font-weight:bold; color:#742A2A;">🎓 ${esc(m.title)}</div>
+                <div style="font-size:12px; color:#4A5568; margin-top:4px;">
+                    • <b>Duration:</b> ${esc(m.duration)} | <b>Mode:</b> ${esc(m.delivery_mode)}<br/>
+                    • <b>Employability Boost:</b> <span style="color:#2F855A; font-weight:bold;">${esc(m.expected_employability_boost)}</span> | <b>Salary Hike:</b> <span style="color:#C53030; font-weight:bold;">${esc(m.potential_salary_hike)}</span>
+                </div>
+            </div>
+        `).join('');
 
         box.innerHTML = `
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
                 <div>
-                    <h3 style="margin:0; color:#0F2942;">Employability Index: <span style="color:#2B6CB0; font-size:22px;">${score}%</span></h3>
+                    <h3 style="margin:0; color:#0F2942;">Employability Index: <span style="color:#2B6CB0; font-size:24px; font-weight:800;">${score}%</span></h3>
                     <span class="risk-pill ${score >= 70 ? 'risk-low' : 'risk-med'}">${esc(res.employability_tier)}</span>
                 </div>
                 <div style="text-align:right; font-size:12px; color:#4A5568;">
-                    <b>${res.active_district_jobs_matching} Active Jobs</b> Matched in ${esc(district)}
+                    <b style="font-size:14px; color:#2B6CB0;">${res.active_district_jobs_matching} Jobs Matched</b> in ${esc(district)}
                 </div>
             </div>
 
+            <!-- Sub-Score Breakdown Bars -->
+            <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:8px; background:#F7FAFC; padding:10px; border-radius:8px; margin-bottom:12px; font-size:11px;">
+                <div>
+                    <b>Technical Alignment:</b> ${sub.technical_alignment || score}%
+                    <div style="height:6px; background:#E2E8F0; border-radius:3px; overflow:hidden; margin-top:3px;"><div style="width:${sub.technical_alignment || score}%; height:100%; background:#2B6CB0;"></div></div>
+                </div>
+                <div>
+                    <b>District Demand Density:</b> ${sub.district_demand_density || 88}%
+                    <div style="height:6px; background:#E2E8F0; border-radius:3px; overflow:hidden; margin-top:3px;"><div style="width:${sub.district_demand_density || 88}%; height:100%; background:#2F855A;"></div></div>
+                </div>
+                <div>
+                    <b>NSQF QP Readiness:</b> ${sub.nsqf_readiness || 82}%
+                    <div style="height:6px; background:#E2E8F0; border-radius:3px; overflow:hidden; margin-top:3px;"><div style="width:${sub.nsqf_readiness || 82}%; height:100%; background:#D69E2E;"></div></div>
+                </div>
+            </div>
+
+            <!-- 💰 3-Tier Salary Growth Tracker -->
+            <div style="background:#EDF2F7; padding:10px 12px; border-radius:8px; margin-bottom:12px;">
+                <h4 style="margin:0 0 6px 0; font-size:12px; color:#0F2942;">💰 Salary & Wage Growth Tracker:</h4>
+                <div style="display:flex; justify-content:space-between; font-size:12px;">
+                    <div><span style="color:#718096;">Current Est.:</span> <b>${esc(sal.current_estimated_entry_salary || "₹18,500/mo")}</b></div>
+                    <div><span style="color:#718096;">Post Micro-Cert:</span> <b style="color:#2F855A;">${esc(sal.post_micro_credential_salary || "₹24,500/mo")}</b></div>
+                    <div><span style="color:#718096;">3-Year Potential:</span> <b style="color:#2B6CB0;">${esc(sal.three_year_career_potential || "₹45,000/mo")}</b></div>
+                </div>
+            </div>
+
+            <!-- Top Hiring Employers -->
             <div style="margin-bottom:12px;">
-                <h4 style="margin:0 0 6px 0; font-size:12px; color:#2D3748;">Matching MIDC Job Openings:</h4>
+                <h4 style="margin:0 0 6px 0; font-size:12px; color:#2D3748;">🏢 Top Hiring MIDC OEMs in ${esc(district)}:</h4>
+                <div>${employerChips}</div>
+            </div>
+
+            <!-- Matching Jobs -->
+            <div style="margin-bottom:12px;">
+                <h4 style="margin:0 0 6px 0; font-size:12px; color:#2D3748;">🎯 Matching Job Openings:</h4>
                 ${jobListHtml}
             </div>
 
-            <div style="background:#FFF5F5; border:1px solid #FEB2B2; padding:12px; border-radius:8px;">
-                <h4 style="margin:0 0 4px 0; font-size:13px; color:#9B2C2C;">💡 Recommended Micro-Credential:</h4>
-                <div style="font-size:13px; font-weight:bold; color:#742A2A;">${esc(micro.title)}</div>
-                <div style="font-size:12px; color:#4A5568; margin-top:4px;">
-                    • <b>Duration:</b> ${esc(micro.duration)} | <b>Mode:</b> ${esc(micro.delivery_mode)}<br/>
-                    • <b>Employability Boost:</b> <span style="color:#2F855A; font-weight:bold;">${esc(micro.expected_employability_boost)}</span><br/>
-                    • <b>Expected Salary Hike:</b> ${esc(micro.potential_salary_hike)}
-                </div>
+            <!-- Recommended Micro-Credential Certification Roadmap -->
+            <div>
+                <h4 style="margin:0 0 6px 0; font-size:13px; color:#9B2C2C;">💡 Recommended Micro-Credential Roadmaps:</h4>
+                ${microCards}
             </div>
         `;
     } catch (err) {
