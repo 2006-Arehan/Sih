@@ -1,0 +1,69 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --font-scale: 1rem;
+  }
+  
+  html {
+    font-size: var(--font-scale);
+    scroll-behavior: smooth;
+  }
+
+  /* High contrast mode accessibility */
+  html.high-contrast {
+    filter: contrast(125%);
+  }
+  
+  html.high-contrast body {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+  }
+
+  html.high-contrast .bg-govnavy-950,
+  html.high-contrast .bg-govnavy-900 {
+    background-color: #000000 !important;
+  }
+
+  html.high-contrast .border-slate-200,
+  html.high-contrast .border-gray-200 {
+    border-color: #000000 !important;
+  }
+}
+
+@layer utilities {
+  /* Tricolor accent bar */
+  .tricolor-stripe {
+    background: linear-gradient(90deg, #FF9933 0%, #FF9933 33.33%, #FFFFFF 33.33%, #FFFFFF 66.66%, #138808 66.66%, #138808 100%);
+  }
+  
+  .tricolor-border-t {
+    border-top: 3px solid transparent;
+    border-image: linear-gradient(to right, #FF9933 0%, #FF9933 33.33%, #FFFFFF 33.33%, #FFFFFF 66.66%, #138808 66.66%, #138808 100%) 1;
+  }
+
+  .tricolor-subtle-glow {
+    box-shadow: 0 0 25px -5px rgba(255, 153, 51, 0.15), 0 0 25px -5px rgba(19, 136, 8, 0.15);
+  }
+}
+
+/* Custom scrollbar for tables and charts */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #F1F5F9;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8;
+}
