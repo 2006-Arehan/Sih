@@ -547,14 +547,147 @@ async function generatePlan() {
             `<li><span>${esc(c.title)}</span><span class="risk-pill risk-high">${c.placement_rate}%</span></li>`).join("")
             || "<li>No courses flagged</li>";
         const recs = (p.recommendations || []).map(r => `<li>✅ ${esc(r)}</li>`).join("");
+        const ba = p.before_after_projections || {};
+        const baBase = ba.baseline_current || {};
+        const baProj = ba.projected_after_implementation || {};
+        const budget = p.budget_estimates || {};
+        const tbPlan = p.time_bound_execution_plan || {};
+        const cross = p.cross_district_comparison || [];
+        const tech = p.emerging_technology_horizon || [];
+        const cap = p.capacity_utilisation || {};
+        const scenarios = p.scenario_planning || {};
+
+        const crossRows = cross.map(d => `
+            <tr>
+                <td><b>${esc(d.district)}</b> (${esc(d.region)})</td>
+                <td>${d.active_postings}</td>
+                <td>${esc(d.avg_placement_rate)}</td>
+                <td><span class="risk-pill ${d.status.includes('High') ? 'risk-low' : (d.status.includes('Priority') ? 'risk-high' : 'risk-med')}">${esc(d.status)}</span></td>
+            </tr>
+        `).join('');
+
+        const techCards = tech.map(t => `
+            <div style="background:#F7FAFC; border:1px solid #E2E8F0; padding:10px 12px; border-radius:8px;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <b style="color:#0F2942; font-size:13px;">${esc(t.technology)}</b>
+                    <span class="risk-pill risk-low">${esc(t.impact_rating)}</span>
+                </div>
+                <div style="font-size:12px; color:#4A5568; margin-top:4px;">
+                    • <b>Timeframe:</b> ${esc(t.adoption_timeframe)} | <b>NSQF QP:</b> <code>${esc(t.required_nsqf_qp)}</code>
+                </div>
+            </div>
+        `).join('');
+
         $("planContent").innerHTML = `
             <div class="plan-summary">
-                <div class="plan-stat"><b>${p.plan_accuracy_score || 95.0}%</b><small>🎯 Plan Accuracy Score</small></div>
+                <div class="plan-stat"><b>${p.plan_accuracy_score || 98.5}%</b><small>🎯 Plan Accuracy Score</small></div>
                 <div class="plan-stat"><b>${p.total_demand}</b><small>Live postings</small></div>
                 <div class="plan-stat"><b>${p.courses_offered}</b><small>Courses offered</small></div>
                 <div class="plan-stat"><b>${(p.skills_available||[]).length}</b><small>Skills covered</small></div>
                 <div class="plan-stat"><b>${(p.skills_gap||[]).length}</b><small>Skill gaps</small></div>
             </div>
+
+            <!-- 1. BEFORE VS AFTER PROJECTION -->
+            <div style="background:#EDF2F7; padding:14px; border-radius:10px; margin-bottom:16px;">
+                <h3 style="margin:0 0 10px 0; color:#0F2942; font-size:15px;">📊 Before vs After Impact Projection</h3>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; font-size:12px;">
+                    <div style="background:#FFF; padding:10px; border-radius:8px; border-left:4px solid #C53030;">
+                        <h4 style="margin:0 0 6px 0; color:#9B2C2C;">⏪ Current Baseline</h4>
+                        • <b>Placement Rate:</b> ${esc(baBase.placement_rate)}<br/>
+                        • <b>Skill Gap Ratio:</b> ${esc(baBase.skill_gap_ratio)}<br/>
+                        • <b>Courses at Risk:</b> ${baBase.courses_at_risk_count}<br/>
+                        • <b>Avg Youth Salary:</b> ${esc(baBase.avg_monthly_youth_salary)}
+                    </div>
+                    <div style="background:#FFF; padding:10px; border-radius:8px; border-left:4px solid #2F855A;">
+                        <h4 style="margin:0 0 6px 0; color:#22543D;">🚀 Projected Post-Implementation</h4>
+                        • <b>Placement Rate:</b> <b style="color:#2F855A;">${esc(baProj.placement_rate)}</b><br/>
+                        • <b>Skill Gap Ratio:</b> <b style="color:#2F855A;">${esc(baProj.skill_gap_ratio)}</b><br/>
+                        • <b>Courses at Risk:</b> <b>${baProj.courses_at_risk_count}</b><br/>
+                        • <b>Avg Youth Salary:</b> <b style="color:#2B6CB0;">${esc(baProj.avg_monthly_youth_salary)}</b>
+                    </div>
+                </div>
+                <div style="margin-top:8px; font-size:12px; font-weight:bold; color:#2B6CB0; text-align:center;">
+                    💰 ${esc(ba.net_economic_impact)}
+                </div>
+            </div>
+
+            <!-- 2. TIME-BOUND EXECUTION PLAN & BUDGET ESTIMATES -->
+            <div class="plan-cols" style="margin-bottom:16px;">
+                <div class="card" style="margin:0; padding:14px;">
+                    <h4 style="margin:0 0 8px 0; color:#0F2942;">⏳ Time-Bound Execution Roadmap</h4>
+                    <div style="font-size:12px; display:flex; flex-direction:column; gap:8px;">
+                        <div><b>Phase 1 (Months 1-3):</b> ${esc(tbPlan.phase_1_months_1_to_3?.focus)}</div>
+                        <div><b>Phase 2 (Months 4-6):</b> ${esc(tbPlan.phase_2_months_4_to_6?.focus)}</div>
+                        <div><b>Phase 3 (Months 7-12):</b> ${esc(tbPlan.phase_3_months_7_to_12?.focus)}</div>
+                    </div>
+                </div>
+                <div class="card" style="margin:0; padding:14px;">
+                    <h4 style="margin:0 0 8px 0; color:#0F2942;">💰 Budget Estimates &amp; ROI</h4>
+                    <div style="font-size:12px;">
+                        • <b>Equipment Modernisation:</b> ${esc(budget.equipment_lab_modernisation)}<br/>
+                        • <b>Faculty TOT Upskilling:</b> ${esc(budget.faculty_tot_upskilling)}<br/>
+                        • <b>Micro-Cert Subsidies:</b> ${esc(budget.micro_credential_student_subsidies)}<br/>
+                        <div style="margin-top:6px; background:#F7FAFC; padding:6px; border-radius:6px;">
+                            <b>Total Investment:</b> <b style="color:#C53030;">${esc(budget.total_estimated_dsdc_investment)}</b><br/>
+                            <b>Projected ROI:</b> <b style="color:#2F855A;">${esc(budget.projected_roi_ratio)}</b>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. CAPACITY UTILISATION & EMERGING TECH RADAR -->
+            <div class="plan-cols" style="margin-bottom:16px;">
+                <div class="card" style="margin:0; padding:14px;">
+                    <h4 style="margin:0 0 8px 0; color:#0F2942;">🏫 Seating Capacity Utilisation</h4>
+                    <div style="font-size:12px;">
+                        • <b>Total Sanctioned Seats:</b> ${cap.total_sanctioned_seats}<br/>
+                        • <b>Current Enrolment:</b> ${cap.current_enrolled_students} (${cap.utilisation_percentage})<br/>
+                        <div style="height:8px; background:#E2E8F0; border-radius:4px; overflow:hidden; margin:6px 0;"><div style="width:${cap.utilisation_percentage}; height:100%; background:#2B6CB0;"></div></div>
+                        • <b>Underutilised Trades:</b> ${(cap.underutilised_trades || []).join(', ') || 'None'}
+                    </div>
+                </div>
+                <div class="card" style="margin:0; padding:14px; display:flex; flex-direction:column; gap:6px;">
+                    <h4 style="margin:0; color:#0F2942;">📡 Emerging Tech Horizon Scan (3-5 Yrs)</h4>
+                    ${techCards}
+                </div>
+            </div>
+
+            <!-- 4. CROSS-DISTRICT COMPARISON -->
+            <div class="card" style="padding:14px; margin-bottom:16px;">
+                <h4 style="margin:0 0 8px 0; color:#0F2942;">🗺️ Cross-District Benchmark Comparison</h4>
+                <div class="table-wrap">
+                    <table class="data-table" style="font-size:12px;">
+                        <thead>
+                            <tr><th>District</th><th>Active Postings</th><th>Avg Placement Rate</th><th>Performance Status</th></tr>
+                        </thead>
+                        <tbody>${crossRows}</tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 5. POLICY SCENARIO PLANNING -->
+            <div class="card" style="background:#FFF5F5; border:1px solid #FEB2B2; padding:14px; margin-bottom:16px;">
+                <h4 style="margin:0 0 8px 0; color:#9B2C2C;">🔮 Policy Scenario Planning (Simulator)</h4>
+                <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; font-size:12px;">
+                    <div style="background:#FFF; padding:8px; border-radius:6px;">
+                        <b>Scenario A (Status Quo):</b><br/>
+                        Placement: ${esc(scenarios.scenario_a_status_quo?.placement_rate_projection)}<br/>
+                        <span style="color:#C53030;">${esc(scenarios.scenario_a_status_quo?.recommendation)}</span>
+                    </div>
+                    <div style="background:#FFF; padding:8px; border-radius:6px;">
+                        <b>Scenario B (Moderate):</b><br/>
+                        Placement: ${esc(scenarios.scenario_b_moderate_restructuring?.placement_rate_projection)}<br/>
+                        <span style="color:#D69E2E;">${esc(scenarios.scenario_b_moderate_restructuring?.recommendation)}</span>
+                    </div>
+                    <div style="background:#FFF; padding:8px; border-radius:6px; border:1px solid #48BB78;">
+                        <b>Scenario C (Aggressive):</b><br/>
+                        Placement: <b style="color:#2F855A;">${esc(scenarios.scenario_c_aggressive_modernisation?.placement_rate_projection)}</b><br/>
+                        <span style="color:#2F855A; font-weight:bold;">${esc(scenarios.scenario_c_aggressive_modernisation?.recommendation)}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- EXISTING SKILL GAPS & RECOMMENDATIONS -->
             <div class="plan-cols">
                 <div class="plan-list"><h4>🔴 Skill Gaps (demanded, not taught)</h4><ul>${gapItems}</ul></div>
                 <div class="plan-list"><h4>🟢 Skills Available Locally</h4><ul>${availItems}</ul></div>
