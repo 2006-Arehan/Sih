@@ -1,6 +1,6 @@
 import os
 from fastapi import FastAPI, Request, Depends, status
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.middleware.cors import CORSMiddleware
@@ -67,6 +67,9 @@ FRONTEND_DIST = os.path.abspath(os.path.join(BASE_DIR, "..", "frontend", "dist")
 app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR, "static")), name="static")
 
 if os.path.exists(FRONTEND_DIST):
+    assets_dir = os.path.join(FRONTEND_DIST, "assets")
+    if os.path.exists(assets_dir):
+        app.mount("/assets", StaticFiles(directory=assets_dir), name="assets")
     app.mount("/frontend", StaticFiles(directory=FRONTEND_DIST, html=True), name="frontend")
 
 templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "templates"))
@@ -104,9 +107,16 @@ def startup_db_seed():
     t = threading.Thread(target=auto_scan_scheduler, daemon=True)
     t.start()
 
-# Serves Dashboard UI
+# Serves React Frontend UI directly at GET /
 @app.get("/", include_in_schema=False)
 def serve_dashboard(request: Request):
+    index_file = os.path.join(FRONTEND_DIST, "index.html")
+    if os.path.exists(index_file):
+        return FileResponse(index_file)
+    return templates.TemplateResponse(request=request, name="index.html")
+
+@app.get("/backend-ui", include_in_schema=False)
+def serve_backend_ui(request: Request):
     return templates.TemplateResponse(request=request, name="index.html")
 
 # Register API v1 Routers
