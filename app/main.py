@@ -1,5 +1,6 @@
 import os
-from fastapi import FastAPI, Request, Depends
+from fastapi import FastAPI, Request, Depends, status
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.middleware.cors import CORSMiddleware
@@ -8,6 +9,8 @@ from sqlalchemy.orm import Session
 from app.config import settings
 from app.database import engine, Base, get_db
 from app.services.seed_service import seed_database
+from app.middleware.security_headers import SecurityHeadersMiddleware
+from app.middleware.rate_limiter import RateLimiterMiddleware
 
 from app.api.v1.jobs import router as jobs_router
 from app.api.v1.skills import router as skills_router
@@ -29,17 +32,33 @@ Base.metadata.create_all(bind=engine)
 app = FastAPI(
     title=settings.PROJECT_NAME,
     version=settings.VERSION,
-    description="Backend API platform for SIH Problem Statement 134: Skill Development & LMI Platform (Government of Maharashtra)"
+    description="Secure Backend API platform for SIH Problem Statement 134: Skill Development & LMI Platform (Government of Maharashtra)"
 )
 
-# CORS Middleware
+# 1. Register HTTP Security Response Headers Middleware
+app.add_middleware(SecurityHeadersMiddleware)
+
+# 2. Register Rate Limiting Middleware (120 req/min per IP)
+app.add_middleware(RateLimiterMiddleware, max_requests_per_minute=120)
+
+# 3. Environment-Configurable CORS Middleware
+allowed_origins = os.getenv("ALLOWED_ORIGINS", "*").split(",")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=allowed_origins,
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
+
+# 4. Global Exception Handler to Mask Raw Tracebacks in Production Responses
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    print(f"[SECURITY ALERT] Unhandled Server Error on {request.url.path}: {exc}")
+    return JSONResponse(
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        content={"detail": "An internal server error occurred. Transaction logged for security audit."}
+    )
 
 # Mount Static Files and Templates
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
