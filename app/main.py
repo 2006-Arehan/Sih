@@ -30,6 +30,7 @@ from app.api.v1.district_plan import router as district_plan_router
 from app.api.v1.trends import router as trends_router
 from app.api.v1.collector import router as collector_router
 from app.api.v1.student import router as student_router
+from app.api.v1.auth import router as auth_router
 
 # Create database tables
 Base.metadata.create_all(bind=engine)
@@ -144,6 +145,7 @@ app.include_router(district_plan_router, prefix=settings.API_V1_STR)
 app.include_router(trends_router, prefix=settings.API_V1_STR)
 app.include_router(collector_router, prefix=settings.API_V1_STR)
 app.include_router(student_router, prefix=settings.API_V1_STR)
+app.include_router(auth_router, prefix="/api/v1/auth")
 
 if __name__ == "__main__":
     import uvicorn

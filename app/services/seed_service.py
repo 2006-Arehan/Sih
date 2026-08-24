@@ -7,7 +7,8 @@ from app.models.models import (
     JobPosting,
     Course,
     ObsolescenceAssessment,
-    EmployerFeedback
+    EmployerFeedback,
+    User
 )
 
 # ---------------------------------------------------------------------------
@@ -427,6 +428,26 @@ def seed_database(db: Session):
             satisfaction_rating=rating,
             comments=comments,
         ))
+
+    # 7. Demo Users for Instant Role Testing
+    from app.api.v1.auth import hash_password
+    demo_users = [
+        ("commissioner.skill@maharashtra.gov.in", "Dr. Rajesh Deshmukh, IAS", "government", "Skill & Entrepreneurship Dept.", "Mumbai City"),
+        ("principal@gppune.ac.in", "Prof. Anjali Kulkarni", "institute", "Government Polytechnic, Pune", "Pune"),
+        ("vikram.joshi@tataautocomp.com", "Vikram Joshi", "employer", "Tata AutoComp Systems Ltd", "Pune"),
+        ("pooja.patil2026@student.msbte.edu.in", "Pooja Patil", "student", "Government Polytechnic, Pune", "Pune")
+    ]
+    for email, name, role, org, dist in demo_users:
+        if not db.query(User).filter(User.email.ilike(email)).first():
+            db.add(User(
+                email=email,
+                hashed_password=hash_password("password123"),
+                full_name=name,
+                role=role,
+                organization=org,
+                district_name=dist,
+                is_active=True
+            ))
 
     db.commit()
 

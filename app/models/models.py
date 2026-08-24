@@ -92,3 +92,16 @@ class EmployerFeedback(Base):
     satisfaction_rating = Column(Integer) # 1 to 5
     comments = Column(Text)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+class User(Base):
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True, index=True)
+    email = Column(String, unique=True, index=True, nullable=False)
+    hashed_password = Column(String, nullable=False)
+    full_name = Column(String, nullable=True)
+    role = Column(String, default="student")  # "government", "institute", "employer", "student"
+    organization = Column(String, nullable=True)
+    district_name = Column(String, nullable=True)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)

@@ -94,6 +94,32 @@ class CourseResponse(CourseBase):
     id: int
     model_config = ConfigDict(from_attributes=True)
 
+# --- Auth & User Schemas ---
+class UserBase(BaseModel):
+    email: str
+    full_name: Optional[str] = None
+    role: str = "student"  # "government", "institute", "employer", "student"
+    organization: Optional[str] = None
+    district_name: Optional[str] = None
+
+class UserCreate(UserBase):
+    password: str
+
+class UserLogin(BaseModel):
+    email: str
+    password: str
+
+class UserResponse(UserBase):
+    id: int
+    is_active: bool
+    created_at: datetime
+    model_config = ConfigDict(from_attributes=True)
+
+class TokenResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    user: UserResponse
+
 # --- Skill Gap Schemas ---
 class SkillGapAnalysisRequest(BaseModel):
     course_id: int

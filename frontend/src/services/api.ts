@@ -144,6 +144,43 @@ export const ApiService = {
 
   async getReports() {
     return fetchFromBackend('/reports', MOCK_REPORTS);
+  },
+
+  // Auth APIs
+  async loginUser(email: string, password: string) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.detail || 'Login failed');
+      }
+      return await response.json();
+    } catch (e) {
+      console.warn('[ApiService] Live auth login failed, fallback to mock login:', e);
+      return null;
+    }
+  },
+
+  async registerUser(email: string, password: string, full_name: string, role: string) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, full_name, role })
+      });
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.detail || 'Registration failed');
+      }
+      return await response.json();
+    } catch (e) {
+      console.warn('[ApiService] Live auth registration failed, fallback to mock register:', e);
+      return null;
+    }
   }
 };
 
