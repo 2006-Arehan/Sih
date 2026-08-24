@@ -62,7 +62,13 @@ async def global_exception_handler(request: Request, exc: Exception):
 
 # Mount Static Files and Templates
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+FRONTEND_DIST = os.path.abspath(os.path.join(BASE_DIR, "..", "frontend", "dist"))
+
 app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR, "static")), name="static")
+
+if os.path.exists(FRONTEND_DIST):
+    app.mount("/frontend", StaticFiles(directory=FRONTEND_DIST, html=True), name="frontend")
+
 templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "templates"))
 
 # 15-Day Automated Market Scanner Scheduler

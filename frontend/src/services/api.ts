@@ -19,72 +19,88 @@ import { JobPosting } from '../types/job';
 import { IndustrySector } from '../types/sector';
 import { TrainingPlannerRecord, EmployerFeedbackRecord } from '../types/dashboard';
 
-// Simulated latency helper
+const API_BASE_URL = typeof window !== 'undefined' && window.location.origin.includes('5173')
+  ? 'http://localhost:8000/api/v1'
+  : '/api/v1';
+
+// Simulated latency helper when fallback is triggered
 const simulateDelay = (ms = 150): Promise<void> => new Promise(resolve => setTimeout(resolve, ms));
+
+async function fetchFromBackend<T>(endpoint: string, fallback: T): Promise<T> {
+  try {
+    const response = await fetch(`${API_BASE_URL}${endpoint}`);
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+    const data = await response.json();
+    return data as T;
+  } catch (error) {
+    console.warn(`[ApiService] API endpoint ${endpoint} unavailable, using mock data fallback:`, error);
+    await simulateDelay();
+    return fallback;
+  }
+}
 
 export const ApiService = {
   // District APIs
   async getAllDistricts(): Promise<DistrictData[]> {
-    await simulateDelay();
-    return [...MAHARASHTRA_DISTRICTS];
+    return fetchFromBackend<DistrictData[]>('/districts', MAHARASHTRA_DISTRICTS);
   },
 
   async getDistrictById(id: string): Promise<DistrictData | undefined> {
-    await simulateDelay();
-    return MAHARASHTRA_DISTRICTS.find(d => d.id === id || d.name.toLowerCase() === id.toLowerCase());
+    try {
+      const districts = await this.getAllDistricts();
+      return districts.find(d => d.id === id || d.name.toLowerCase() === id.toLowerCase());
+    } catch {
+      return MAHARASHTRA_DISTRICTS.find(d => d.id === id || d.name.toLowerCase() === id.toLowerCase());
+    }
   },
 
   async getDistrictsByDivision(division: string): Promise<DistrictData[]> {
-    await simulateDelay();
-    return MAHARASHTRA_DISTRICTS.filter(d => d.division === division);
+    const districts = await this.getAllDistricts();
+    return districts.filter(d => d.division === division);
   },
 
   // Skills & Intelligence APIs
   async getAllSkills(): Promise<SkillItem[]> {
-    await simulateDelay();
-    return [...SKILLS_DATA];
+    return fetchFromBackend<SkillItem[]>('/skills', SKILLS_DATA);
   },
 
   async getEmergingSkills(): Promise<SkillItem[]> {
-    await simulateDelay();
-    return SKILLS_DATA.filter(s => s.type === 'emerging');
+    return fetchFromBackend<SkillItem[]>('/skills?type=emerging', SKILLS_DATA.filter(s => s.type === 'emerging'));
   },
 
   async getSkillById(id: string): Promise<SkillItem | undefined> {
-    await simulateDelay();
-    return SKILLS_DATA.find(s => s.id === id);
+    const skills = await this.getAllSkills();
+    return skills.find(s => s.id === id);
   },
 
   // Courses & Curriculum APIs
   async getAllCourses(): Promise<Course[]> {
-    await simulateDelay();
-    return [...COURSES_DATA];
+    return fetchFromBackend<Course[]>('/courses', COURSES_DATA);
   },
 
   async getCourseById(id: string): Promise<Course | undefined> {
-    await simulateDelay();
-    return COURSES_DATA.find(c => c.id === id);
+    const courses = await this.getAllCourses();
+    return courses.find(c => c.id === id);
   },
 
   async getCoursesByHealth(status: string): Promise<Course[]> {
-    await simulateDelay();
-    return COURSES_DATA.filter(c => c.healthStatus === status);
+    const courses = await this.getAllCourses();
+    return courses.filter(c => c.healthStatus === status);
   },
 
   // Jobs APIs
   async getAllJobs(): Promise<JobPosting[]> {
-    await simulateDelay();
-    return [...JOBS_DATA];
+    return fetchFromBackend<JobPosting[]>('/jobs', JOBS_DATA);
   },
 
   async getJobById(id: string): Promise<JobPosting | undefined> {
-    await simulateDelay();
-    return JOBS_DATA.find(j => j.id === id);
+    const jobs = await this.getAllJobs();
+    return jobs.find(j => j.id === id);
   },
 
   async searchJobs(query: string, district?: string, sector?: string): Promise<JobPosting[]> {
-    await simulateDelay();
-    return JOBS_DATA.filter(j => {
+    const jobs = await this.getAllJobs();
+    return jobs.filter(j => {
       const matchQuery = !query || j.title.toLowerCase().includes(query.toLowerCase()) || j.requiredSkills.some(s => s.toLowerCase().includes(query.toLowerCase()));
       const matchDist = !district || district === 'All' || j.district === district;
       const matchSec = !sector || sector === 'All' || j.sector === sector;
@@ -94,48 +110,40 @@ export const ApiService = {
 
   // Sectors APIs
   async getAllSectors(): Promise<IndustrySector[]> {
-    await simulateDelay();
-    return [...SECTORS_DATA];
+    return fetchFromBackend<IndustrySector[]>('/sectors', SECTORS_DATA);
   },
 
   // Dashboard & State Analytics APIs
   async getStateImpactStats() {
-    await simulateDelay();
-    return { ...STATE_IMPACT_STATS };
+    return fetchFromBackend('/stats/impact', STATE_IMPACT_STATS);
   },
 
   async getSectorDemandDistribution() {
-    await simulateDelay();
-    return [...SECTOR_DEMAND_DISTRIBUTION];
+    return fetchFromBackend('/stats/sector-demand', SECTOR_DEMAND_DISTRIBUTION);
   },
 
   async getMonthlyDemandTrend() {
-    await simulateDelay();
-    return [...MONTHLY_DEMAND_TREND];
+    return fetchFromBackend('/stats/monthly-trend', MONTHLY_DEMAND_TREND);
   },
 
   async getForecastData() {
-    await simulateDelay();
-    return [...FORECAST_DATASETS];
+    return fetchFromBackend('/stats/forecast', FORECAST_DATASETS);
   },
 
   async getTrainingPlannerData(): Promise<TrainingPlannerRecord[]> {
-    await simulateDelay();
-    return [...TRAINING_PLANNER_DATA];
+    return fetchFromBackend<TrainingPlannerRecord[]>('/planner', TRAINING_PLANNER_DATA);
   },
 
   async getEmployerFeedback(): Promise<EmployerFeedbackRecord[]> {
-    await simulateDelay();
-    return [...EMPLOYER_FEEDBACK_DATA];
+    return fetchFromBackend<EmployerFeedbackRecord[]>('/feedback', EMPLOYER_FEEDBACK_DATA);
   },
 
   async getTopEmployers() {
-    await simulateDelay();
-    return [...TOP_EMPLOYERS];
+    return fetchFromBackend('/employers/top', TOP_EMPLOYERS);
   },
 
   async getReports() {
-    await simulateDelay();
-    return [...MOCK_REPORTS];
+    return fetchFromBackend('/reports', MOCK_REPORTS);
   }
 };
+
