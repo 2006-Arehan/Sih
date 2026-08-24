@@ -46,15 +46,38 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR, "static")), name="static")
 templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "templates"))
 
-# Startup event to seed database
+# 15-Day Automated Market Scanner Scheduler
+def auto_scan_scheduler():
+    """Background thread that automatically runs job market collection every 15 days."""
+    import time
+    FIFTEEN_DAYS = 15 * 24 * 3600
+    while True:
+        time.sleep(FIFTEEN_DAYS)
+        try:
+            from app.database import SessionLocal
+            from app.services.job_collector import JobCollectorService
+            db = SessionLocal()
+            try:
+                JobCollectorService.collect_job_postings(db)
+            finally:
+                db.close()
+        except Exception as e:
+            print(f"[Auto-Scan] Scheduled scan log: {e}")
+
+# Startup event to seed database and start 15-day scheduler
 @app.on_event("startup")
 def startup_db_seed():
+    import threading
     from app.database import SessionLocal
     db = SessionLocal()
     try:
         seed_database(db)
     finally:
         db.close()
+
+    # Start 15-day automated market collector in background thread
+    t = threading.Thread(target=auto_scan_scheduler, daemon=True)
+    t.start()
 
 # Serves Dashboard UI
 @app.get("/", include_in_schema=False)

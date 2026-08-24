@@ -43,6 +43,7 @@ const TRANSLATIONS = {
         pdf_btn: "📄 Download Official DSDC Cabinet Note PDF",
         sec08_title: "Employer Feedback Loop",
         submit_feedback: "Submit Feedback",
+        auto_scan_status: "🔄 Auto-Sync Active (Every 15 Days)",
         app_footer: "Skill Development & Labour-Market Intelligence Platform · Directorate of Vocational Education & Training, Government of Maharashtra",
         
         trend_emerging: "🚀 Emerging",
@@ -60,6 +61,7 @@ const TRANSLATIONS = {
         app_title: "कौशल्य विकास आणि कामगार बाजार बुद्धिमत्ता प्लॅटफॉर्म",
         app_subtitle: "महाराष्ट्र शासन · व्यवसाय शिक्षण व प्रशिक्षण संचालनालय",
         scan_market: "बाजार स्कॅन करा",
+        auto_scan_status: "🔄 स्वयंचलित सिंक सुरू (दर १५ दिवसांनी)",
         kpi_districts: "जिल्हे",
         kpi_postings: "थेट नोकरी जाहिराती",
         kpi_courses: "अभ्यासक्रम ट्रॅक केले",
@@ -107,6 +109,7 @@ const TRANSLATIONS = {
         app_title: "कौशल विकास एवं श्रम बाजार बुद्धिमत्ता मंच",
         app_subtitle: "महाराष्ट्र सरकार · व्यवसाय शिक्षा एवं प्रशिक्षण निदेशालय",
         scan_market: "बाजार स्कैन करें",
+        auto_scan_status: "🔄 स्वचालित सिंक सक्रिय (प्रत्येक 15 दिनों में)",
         kpi_districts: "जिले",
         kpi_postings: "लाइव नौकरी विज्ञापन",
         kpi_courses: "ट्रैक किए गए पाठ्यक्रम",
@@ -781,7 +784,8 @@ async function scanMarket() {
 
 /* ---------- Bootstrap & Event Listeners ---------- */
 function wireEvents() {
-    $("scanBtn").addEventListener("click", scanMarket);
+    const sBtn = $("scanBtn");
+    if (sBtn) sBtn.addEventListener("click", scanMarket);
     $("planBtn").addEventListener("click", generatePlan);
     $("districtSelect").addEventListener("change", e => renderDistrict(e.target.value));
     $("recCourseSelect").addEventListener("change", e => loadRecommendation(e.target.value));
