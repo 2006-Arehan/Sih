@@ -1,4 +1,9 @@
 import os
+import sys
+
+# Ensure parent directory is in sys.path so running python main.py works in any working directory
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 from fastapi import FastAPI, Request, Depends, status
 from fastapi.responses import JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -107,9 +112,22 @@ def startup_db_seed():
     t = threading.Thread(target=auto_scan_scheduler, daemon=True)
     t.start()
 
-# Serves Regenerated Web UI at GET /
+# Serves SkillPulse React Frontend UI directly at GET / and for all client SPA routes
 @app.get("/", include_in_schema=False)
-def serve_dashboard(request: Request):
+@app.get("/about", include_in_schema=False)
+@app.get("/how-it-works", include_in_schema=False)
+@app.get("/features", include_in_schema=False)
+@app.get("/insights", include_in_schema=False)
+@app.get("/resources", include_in_schema=False)
+@app.get("/contact", include_in_schema=False)
+@app.get("/government/{subpath:path}", include_in_schema=False)
+@app.get("/institute/{subpath:path}", include_in_schema=False)
+@app.get("/employer/{subpath:path}", include_in_schema=False)
+@app.get("/student/{subpath:path}", include_in_schema=False)
+def serve_skillpulse_app(request: Request):
+    index_file = os.path.join(FRONTEND_DIST, "index.html")
+    if os.path.exists(index_file):
+        return FileResponse(index_file)
     return templates.TemplateResponse(request=request, name="index.html")
 
 # Register API v1 Routers
@@ -126,3 +144,9 @@ app.include_router(district_plan_router, prefix=settings.API_V1_STR)
 app.include_router(trends_router, prefix=settings.API_V1_STR)
 app.include_router(collector_router, prefix=settings.API_V1_STR)
 app.include_router(student_router, prefix=settings.API_V1_STR)
+
+if __name__ == "__main__":
+    import uvicorn
+    port = int(os.getenv("PORT", 8080))
+    print(f"Starting Maharashtra Skill & LMI Platform on http://127.0.0.1:{port}...")
+    uvicorn.run("app.main:app", host="127.0.0.1", port=port, reload=True)
